@@ -173,13 +173,15 @@ drv() {
 
 # Build configurations locally
 build() {
-	local -a args configs
+	local args=()
+	local configs=()
 	for config in "$@"; do
 		config_check "$config" '.remoteBuild' && continue
 		[[ -e "$(f_drv "$config")" ]] || continue
 		configs+=("$config")
 		args+=("$(readlink -f "$(f_drv "$config")")^*")
 	done
+	[[ ${#configs[@]} -gt 0 ]] || return 0
 	stage "Building: ${configs[*]}"
 	# Build all configurations at once
 	_nix build --keep-going --no-link "${nixargs[@]}" "${args[@]}"
@@ -203,8 +205,8 @@ remote_build() {
 		stage "Building: $config"
 		local drv
 		drv="$(readlink -f "$(f_drv "$config")")"
-		_copy "$config" "$drv"
-		_ssh nix build --no-link "${nixargs[@]}" "$drv^*"
+		_copy "$config" "$drv^*" --derivation
+		_ssht "$config" nix build --no-link "${nixargs[@]}" "'$drv^*'"
 	done
 }
 
@@ -243,7 +245,7 @@ activate() {
 	shift
 	for config in "$@"; do
 		out="$(_outPath "$config")"
-		[[ -e "$out" ]] || continue
+		[[ -e "$out" ]] || config_check "$config" '.remoteBuild' || continue
 		stage "${op^} configuration $config"
 		_ssht "$config" "$out/bin/nixdeploy" "$op"
 	done
