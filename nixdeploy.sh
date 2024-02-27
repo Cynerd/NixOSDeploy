@@ -184,7 +184,7 @@ build() {
 	[[ ${#configs[@]} -gt 0 ]] || return 0
 	stage "Building: ${configs[*]}"
 	# Build all configurations at once
-	_nix build --keep-going --no-link "${nixargs[@]}" "${args[@]}"
+	nix build --keep-going --no-link "${nixargs[@]}" "${args[@]}" || true
 	# Create links to keep latest builds from being garbage collected
 	for config in "${configs[@]}"; do
 		local res dest
