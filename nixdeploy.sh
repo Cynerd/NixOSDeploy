@@ -253,11 +253,8 @@ activate() {
 }
 
 ################################################################################
-flake_metadata="$(nix flake metadata --json)"
-
 # Parse options
 declare -a nixargs
-src="$(jq -r '.url' <<<"$flake_metadata" | sed 's#^git+file://##')"
 fast="n"
 do_build="y"
 do_copy="y"
@@ -310,12 +307,16 @@ while getopts "erctbda:p:fxh" opt; do
 done
 shift $((OPTIND - 1))
 
+if ! [[ -v src ]]; then
+	flake_metadata="$(nix flake metadata --json)"
+	src="$(jq -r '.url' <<<"$flake_metadata" | sed 's#^git+file://##')"
+fi
+build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
+
 # Configuration
 [[ -f "$src/.nixdeploy-config.sh" ]] && ."$src/.nixdeploy-config.sh"
 
-build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
-
-# Index configurations
+# Index files
 f_src_hash="$src/.nixdeploy/hash"
 f_src_config_hash="$src/.nixdeploy/hash-config"
 f_configs="$src/.nixdeploy/nixosConfigurations.json"
