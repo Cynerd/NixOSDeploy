@@ -34,8 +34,12 @@ progress() {
 }
 
 usage() {
+	echo "Usage: $0 [OPTION].. [SYSTEM].." >&2
+}
+
+help() {
+	usage
 	cat >&2 <<-EOF
-		Usage: $0 [OPTION].. [SYSTEM]..
 
 		NixOS deployment tool.
 		This tool manages your NixOS configuration evaluation, build, copy to
@@ -296,7 +300,7 @@ while getopts "erctbda:p:fxh" opt; do
 		set -x
 		;;
 	h)
-		usage
+		help
 		exit 0
 		;;
 	*)
