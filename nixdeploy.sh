@@ -35,25 +35,24 @@ progress() {
 
 usage() {
 	cat >&2 <<-EOF
-		NixOS deployment tool.
+		Usage: $0 [OPTION].. [SYSTEM]..
 
-		Usage: $0 [OPTION].. <OPERATION> [SYSTEM]..
+		NixOS deployment tool.
+		This tool manages your NixOS configuration evaluation, build, copy to
+		the destination and switch to it.
 
 		Options:
+		  -e      Perform only evaluation
+		  -r      Perform only evaluation and build (realize)
+		  -c      Perform only evaluation, build and copy
+		  -t      Do not make it boot default when switching to the new configuration
+		  -b      Do not switch to the configuration immediately (make it only boot default)
+		  -d      Instead of activation switch print only what would be done to activate it
 		  -a ARGS Argument to be appended when invoking 'nix build'
-		  -d PATH Path to the directory with flake (otherwise current directory is used)
+		  -p PATH Path to the directory with flake (otherwise current directory is used)
 		  -f      Fast execution by not fetching latest deployment configuration
 		  -x      Run in debug mode
 		  -h      Print this help text and exit
-
-		Operations:
-		  eval        Only evalute configuration (use for checking it)
-		  build|b     Build NixOS system
-		  copy|c      Build NixOS system and copy it to the destination
-		  switch|s    Switch NixOS system to the latest built (this is the default)
-		  test|t      Switch NixOS system to the latest built but do not add it to boot menu
-		  boot        Set latest NixOS system built to be used on next boot
-		  dry|d       Show what would be done if this configuration would be activated
 	EOF
 }
 
@@ -139,6 +138,8 @@ _outPath() {
 }
 
 ################################################################################
+
+# TODO we should lock our directory when we are indexing the configuration
 
 index_config() {
 	local config="$1"
@@ -258,12 +259,37 @@ flake_metadata="$(nix flake metadata --json)"
 declare -a nixargs
 src="$(jq -r '.url' <<<"$flake_metadata" | sed 's#^git+file://##')"
 fast="n"
-while getopts "a:d:fxh" opt; do
+do_build="y"
+do_copy="y"
+do_activate="y"
+activate_op="switch"
+while getopts "erctbda:p:fxh" opt; do
 	case "$opt" in
+	e)
+		do_build="n"
+		do_copy="n"
+		do_activate="n"
+		;;
+	r)
+		do_copy="n"
+		do_activate="n"
+		;;
+	c)
+		do_activate="n"
+		;;
+	t)
+		activate_op="test"
+		;;
+	b)
+		activate_op="boot"
+		;;
+	d)
+		activate_op="dry"
+		;;
 	a)
 		nixargs+=("$OPTARG")
 		;;
-	d)
+	p)
 		src="${OPTARG}"
 		;;
 	f)
@@ -286,14 +312,6 @@ shift $((OPTIND - 1))
 
 # Configuration
 [[ -f "$src/.nixdeploy-config.sh" ]] && ."$src/.nixdeploy-config.sh"
-
-# Operation
-if [[ $# -gt 0 ]]; then
-	operation="$1"
-	shift
-else
-	operation="switch"
-fi
 
 build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
 
@@ -336,51 +354,10 @@ fi
 
 [[ $# -gt 0 ]] || fail "No configuration to deploy."
 
-# Invoke required operation
-case "$operation" in
-eval)
-	drv "$@"
-	;;
-build | b)
+drv "$@"
+if [[ "$do_build" == "y" ]]; then
 	build "$@"
 	remote_build "$@"
-	;;
-copy | c)
-	drv "$@"
-	build "$@"
-	remote_build "$@"
-	copy "$@"
-	;;
-switch | s)
-	drv "$@"
-	build "$@"
-	remote_build "$@"
-	copy "$@"
-	activate switch "$@"
-	;;
-test | t)
-	drv "$@"
-	build "$@"
-	remote_build "$@"
-	copy "$@"
-	activate test "$@"
-	;;
-boot)
-	drv "$@"
-	build "$@"
-	remote_build "$@"
-	copy "$@"
-	activate boot "$@"
-	;;
-dry | d)
-	drv "$@"
-	build "$@"
-	remote_build "$@"
-	copy "$@"
-	activate dry "$@"
-	;;
-*)
-	echo "Unknown operation: $operation" >&2
-	exit 2
-	;;
-esac
+fi
+[[ "$do_copy" == "y" ]] && copy "$@"
+[[ "$do_activate" == "y" ]] && activate "$activate_op" "$@"
