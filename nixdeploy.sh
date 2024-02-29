@@ -283,6 +283,7 @@ activate() {
 		out="$(_outPath "$config")"
 		[[ -e "$out" ]] || config_check "$config" '.remoteBuild' || continue
 		stage "${op^} configuration $config"
+		echo -e '\a'
 		_ssht "$config" "$out/bin/nixdeploy" "$op"
 	done
 }
