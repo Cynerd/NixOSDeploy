@@ -150,6 +150,7 @@ config() {
 			if [[ -z "$old_hash" ]] || [[ "$fast" == "n" ]] && [[ "$old_hash" != "$src_hash" ]]; then
 				stage "Indexing your flake..."
 				rm -f "$src/.nixdeploy"/config-*.json >/dev/null || true
+				truncate --size 0 /dev/fd/42
 				nixeval "nixosConfigurations" --apply "v: {\"$src_hash\" = builtins.attrNames v;}" >&42
 			fi
 			readarray -d '' sconfigs < <(jq --raw-output0 '.[][]' "/dev/fd/42")
@@ -162,6 +163,7 @@ config() {
 			if [[ -z "$old_hash" ]] || [[ "$fast" == "n" ]] && [[ "$old_hash" != "$src_hash" ]]; then
 				info "Loading deployment configuration for $config..."
 				local attr="nixosConfigurations.\"${config}\".config"
+				truncate --size 0 /dev/fd/42
 				if [[ "$(nixeval "$attr" --apply 'builtins.hasAttr "deploy"')" == "true" ]]; then
 					nixeval "$attr.deploy" --apply "v: {\"$src_hash\" = v;}" >&42
 				else
