@@ -240,8 +240,8 @@ remote_build() {
 		stage "Building: $config"
 		local drv
 		drv="$(f_drv_store "$config")"
-		_copy "$config" "$drv^*" --derivation
-		_ssht "$config" nix build --no-link "${nixargs[@]}" "'$drv^*'"
+		_copy "$config" "$drv" --derivation
+		_ssht "$config" nix build --no-link "${nixargs[@]}" "'$drv'"
 	done
 }
 
