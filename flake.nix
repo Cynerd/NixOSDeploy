@@ -12,10 +12,13 @@
       nixosModules.default = import ./nixos.nix;
       overlays.default = final: prev: {
         nixdeploy = final.callPackage ./pkg.nix {
-          _srchash = "";
+          _srchash = self.shortRev or self.dirtyShortRev or "unknown";
         };
       };
-      s = self;
+      templates.default = {
+        path = ./template;
+        description = "NixOS configurations deployed with NixDeploy";
+      };
     }
     // (eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system}.extend self.overlays.default;

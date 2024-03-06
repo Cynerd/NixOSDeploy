@@ -13,7 +13,7 @@
 in
   stdenvNoCC.mkDerivation (final: {
     pname = "nixdeploy";
-    version = "1.0.0${_srchash}";
+    version = "1.0.0-${_srchash}";
     nativeBuildInputs = [makeWrapper];
     dontUnpack = true;
     installPhase = ''
