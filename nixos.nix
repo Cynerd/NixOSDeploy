@@ -15,13 +15,20 @@ in {
       type = types.bool;
       default = true;
       example = false;
-      description = mdDoc "If this deployment is included if running nixturris without any system selected.";
+      description = mdDoc ''
+        Controls inclusion of this configuration when runninig `nixdeploy` without
+        any specific target.
+      '';
     };
 
     hostName = mkOption {
       type = types.str;
       default = config.networking.hostName;
-      description = mdDoc "This hostname is used to identify if we are no doing local build.";
+      description = mdDoc ''
+        This hostname is used to identify if we are not doing local build.
+
+        Local build skips SSH access steps and runs all commands locally instead.
+      '';
     };
 
     ssh = {
@@ -29,7 +36,20 @@ in {
         type = types.str;
         default = config.networking.hostName;
         defaultText = literalExpression "config.networking.hostName";
-        description = mdDoc "SSH host deploy should happen to";
+        description = mdDoc ''
+          SSH host deploy should happen to.
+
+          The default is the host name. That can be used by user to setup their
+          own SSH configuration for their specific access. The example for host
+          name `edge` would for example be:
+
+          ```
+          Host edge
+            User john
+            Hostname 10.4.0.139
+            IdentityFile ~/.ssh/corporate
+          ```
+        '';
       };
     };
     sucmd = mkOption {
@@ -37,6 +57,7 @@ in {
       default = "sudo";
       description = mdDoc ''
         Command used to elevate access to root.
+
         Set it to empty string if you connect directly to root account.
       '';
     };
@@ -47,7 +68,11 @@ in {
       default = config.deploy.remoteBuild;
       description = mdDoc "Build natively instead of cross compilation when applicable.";
     };
-    noCopySubstityte = mkEnableOption (mdDoc "Disable substitution on copy destination (copy everything from local machine)");
+    noCopySubstitute = mkEnableOption (mdDoc ''
+      Disable substitution on copy to destination (copy everything from local
+      machine). This might be required if target machine doesn't have access to
+      the Internet or even if it just slower than direct copy.
+    '');
   };
 
   config = mkIf config.deploy.enable {

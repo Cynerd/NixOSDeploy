@@ -127,7 +127,7 @@ _copy() {
 	local config="$1"
 	shift
 	local -a args
-	config_check "$config" '.noCopySubstityte' || args+=("--substitute-on-destination")
+	config_check "$config" '.noCopySubstitute' || args+=("--substitute-on-destination")
 	nix copy "${args[@]}" --to "ssh://$(config_get "$config" '.ssh.host')" "$@"
 }
 
