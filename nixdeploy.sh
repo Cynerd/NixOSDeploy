@@ -363,11 +363,11 @@ f_result() { echo "$src/.nixdeploy/result-$1"; }
 
 src_hash="$(_nix flake prefetch --json "$src" | jq -r '.hash')"
 
-declare -A configs
+declare -A configs=()
 mkdir -p "$src/.nixdeploy"
 config "$@"
 
-[[ ${#configs[@]} -gt 0 ]] || fail "No configuration to deploy."
+(( ${#configs[@]} )) || fail "No configuration to deploy."
 
 drv
 if [[ "$do_build" == "y" ]]; then
