@@ -2,6 +2,8 @@
   system.stateVersion = "24.05";
   nixpkgs.hostPlatform.system = "x86_64-linux";
 
+  deploy.enable = true;
+
   boot = {
     loader = {
       systemd-boot.enable = true;
