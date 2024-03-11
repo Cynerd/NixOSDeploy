@@ -157,6 +157,7 @@ config() {
 		} 42<>"$f_configs"
 	fi
 	for config in "${sconfigs[@]}"; do
+		[[ "$config" == "localhost" ]] && config="$(hostname)"
 		{
 			flock 42
 			old_hash="$(jq -r 'keys | .[0]' /dev/fd/42)"
@@ -367,7 +368,7 @@ declare -A configs=()
 mkdir -p "$src/.nixdeploy"
 config "$@"
 
-(( ${#configs[@]} )) || fail "No configuration to deploy."
+((${#configs[@]})) || fail "No configuration to deploy."
 
 drv
 if [[ "$do_build" == "y" ]]; then
