@@ -46,10 +46,7 @@
           };
         };
 
-      nixosConfigurations = import ./nixos/configurations {
-        inherit (nixpkgs) lib;
-        defaultModule = self.nixosModules.default;
-      };
+      nixosConfigurations = import ./nixos/configurations self;
       lib = import ./lib nixpkgs.lib;
     }
     // eachDefaultSystem (system: let
