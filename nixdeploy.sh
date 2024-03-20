@@ -109,7 +109,7 @@ __ssh() (
 	local arg="$1"
 	local config="$2"
 	shift 2
-	config_read "$config" '[.ssh.host,.hostName].[]' ssh_host hostname
+	config_read "$config" '[.ssh.host,._dups.hostName].[]' ssh_host hostname
 	if [ "$hostname" != "$(hostname)" ]; then
 		ssh $arg "$ssh_host" -- "$@"
 	else
@@ -248,7 +248,7 @@ remote_build() {
 
 copy() {
 	for config in "${!configs[@]}"; do
-		[[ "$(config_get "$config" '.hostName')" != "$(hostname)" ]] || continue
+		[[ "$(config_get "$config" '._dups.hostName')" != "$(hostname)" ]] || continue
 		config_check "$config" '.remoteBuild' && continue
 
 		local res

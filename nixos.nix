@@ -21,16 +21,6 @@ in {
       '';
     };
 
-    hostName = mkOption {
-      type = types.str;
-      default = config.networking.hostName;
-      description = mdDoc ''
-        This hostname is used to identify if we are not doing local build.
-
-        Local build skips SSH access steps and runs all commands locally instead.
-      '';
-    };
-
     ssh = {
       host = mkOption {
         type = types.str;
@@ -73,6 +63,13 @@ in {
       machine). This might be required if target machine doesn't have access to
       the Internet or even if it just slower than direct copy.
     '');
+
+    _dups = mkOption {
+      type = types.anything;
+      internal = true;
+      visible = false;
+      readOnly = true;
+    };
   };
 
   config = mkIf config.deploy.enable {
@@ -80,5 +77,9 @@ in {
       sucmd='${config.deploy.sucmd}' substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
       chmod +x $out/bin/nixdeploy
     '';
+
+    deploy._dups = {
+      inherit (config.networking) hostName;
+    };
   };
 }
