@@ -6,7 +6,7 @@
     nixpkgs,
     flake-utils,
   }: let
-    inherit (flake-utils.lib) eachDefaultSystem filterPackages;
+    inherit (flake-utils.lib) eachDefaultSystem;
   in
     {
       nixosModules.default = import ./nixos.nix;

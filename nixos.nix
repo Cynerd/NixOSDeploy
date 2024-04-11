@@ -1,13 +1,9 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
-  inherit (lib) mkOption mkEnableOption mkPackageOption types mkIf literalExpression mdDoc;
-  cnf = config.deploy;
-
-  toplevel_drv = builtins.unsafeDiscardOutputDependency config.system.build.toplevel.drvPath;
+  inherit (lib) mkOption mkEnableOption types mkIf literalExpression mdDoc;
 in {
   options.deploy = {
     enable = mkEnableOption (mdDoc "Enable deployment for this NixOS configuration.");
@@ -72,8 +68,8 @@ in {
     };
   };
 
-  config = mkIf config.deploy.enable {
-    system.extraSystemBuilderCmds = ''
+  config = {
+    system.extraSystemBuilderCmds = mkIf config.deploy.enable ''
       sucmd='${config.deploy.sucmd}' substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
       chmod +x $out/bin/nixdeploy
     '';

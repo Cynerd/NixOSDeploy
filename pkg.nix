@@ -5,7 +5,7 @@
   _srchash,
   jq,
 }: let
-  inherit (lib) hasSuffix licenses platforms makeBinPath;
+  inherit (lib) licenses platforms makeBinPath;
 
   dependencies = [
     jq
