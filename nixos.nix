@@ -3,15 +3,15 @@
   lib,
   ...
 }: let
-  inherit (lib) mkOption mkEnableOption types mkIf literalExpression mdDoc;
+  inherit (lib) mkOption mkEnableOption types mkIf literalExpression;
 in {
   options.deploy = {
-    enable = mkEnableOption (mdDoc "Enable deployment for this NixOS configuration.");
+    enable = mkEnableOption "Enable deployment for this NixOS configuration.";
     default = mkOption {
       type = types.bool;
       default = true;
       example = false;
-      description = mdDoc ''
+      description = ''
         Controls inclusion of this configuration when runninig `nixdeploy` without
         any specific target.
       '';
@@ -22,7 +22,7 @@ in {
         type = types.str;
         default = config.networking.hostName;
         defaultText = literalExpression "config.networking.hostName";
-        description = mdDoc ''
+        description = ''
           SSH host deploy should happen to.
 
           The default is the host name. That can be used by user to setup their
@@ -41,24 +41,24 @@ in {
     sucmd = mkOption {
       type = types.str;
       default = "sudo";
-      description = mdDoc ''
+      description = ''
         Command used to elevate access to root.
 
         Set it to empty string if you connect directly to root account.
       '';
     };
 
-    remoteBuild = mkEnableOption (mdDoc "Build on destination machine instead of local");
+    remoteBuild = mkEnableOption "Build on destination machine instead of local";
     nativeBuild = mkOption {
       type = types.bool;
       default = config.deploy.remoteBuild;
-      description = mdDoc "Build natively instead of cross compilation when applicable.";
+      description = "Build natively instead of cross compilation when applicable.";
     };
-    noCopySubstitute = mkEnableOption (mdDoc ''
+    noCopySubstitute = mkEnableOption ''
       Disable substitution on copy to destination (copy everything from local
       machine). This might be required if target machine doesn't have access to
       the Internet or even if it just slower than direct copy.
-    '');
+    '';
 
     _dups = mkOption {
       type = types.anything;
