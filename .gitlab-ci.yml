@@ -1,0 +1,59 @@
+stages:
+  - test
+  - style
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+variables:
+  GIT_DEPTH: 0
+  CACHIX_NAME: nixturris
+
+.nix:
+  image: registry.gitlab.com/cynerd/gitlab-ci-nix
+  tags:
+    - docker
+  cache:
+    key: "nix"
+    paths:
+      - ".nix-cache"
+  before_script:
+    - gitlab-ci-nix-cache-before
+  after_script:
+    - gitlab-ci-nix-cache-after
+
+
+## Test stage ##################################################################
+
+nix-check:
+  stage: test
+  extends: .nix
+  script:
+    - nix flake check
+
+statix:
+  stage: test
+  extends: .nix
+  script:
+    - nix run .#statix -- check .
+
+deadnix:
+  stage: test
+  extends: .nix
+  allow_failure: true
+  script:
+    - nix run .#deadnix -- -f .
+
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+## Style stage #################################################################
+
+nixfmt:
+  stage: style
+  extends: .nix
+  allow_failure: true
+  script:
+    - nix fmt
+    - git diff --exit-code

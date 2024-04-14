@@ -1,4 +1,4 @@
-{...}: {
+_: {
   users = {
     groups.john.gid = 1000;
     users.john = {
