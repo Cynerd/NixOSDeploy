@@ -1,8 +1,8 @@
 {
   description = "NixOS configurations with NixDeploy";
 
-  inputs.nixdeploy = {
-    url = "gitlab:cynerd/nixdeploy";
+  inputs.nixosdeploy = {
+    url = "gitlab:cynerd/nixosdeploy";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -10,7 +10,7 @@
     self,
     flake-utils,
     nixpkgs,
-    nixdeploy,
+    nixosdeploy,
     ...
   }: let
     inherit (flake-utils.lib) eachDefaultSystem;
@@ -35,7 +35,7 @@
           default = {
             imports =
               [
-                nixdeploy.nixosModules.default
+                nixosdeploy.nixosModules.default
                 # You can add here modules from other inputs.
               ]
               ++ (attrValues modules);
@@ -52,7 +52,7 @@
     // eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system}.extend self.overlays.default;
     in {
-      packages.default = nixdeploy.packages.${system}.default;
+      packages.default = nixosdeploy.packages.${system}.default;
       legacyPackages = pkgs;
       formatter = pkgs.alejandra;
     });

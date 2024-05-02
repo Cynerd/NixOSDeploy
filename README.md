@@ -1,4 +1,4 @@
-# NixDeploy (NixOS deployment tool)
+# NixOSDeploy (NixOS deployment tool)
 
 This is yet another deployment tool for NixOS. This tries to be as easy to use
 as possible while not introducing new concepts to NixOS.
@@ -20,7 +20,7 @@ NixDeploy consist of NixOS configuration module and `nixdeploy` tool itself.
 The configuration can be bootstrapped with:
 
 ```console
-nix flake init -t gitlab:cynerd/nixdeploy
+nix flake init -t gitlab:cynerd/nixosdeploy
 ```
 
 This will copy to your current work directory template from this repository that
@@ -37,7 +37,7 @@ gitlab:cynerd/nixdeploy` or you can install it as package to your system, but
 the preferred way is to make it a default package of you flake:
 
 ```nix
-packages.x86_64-linux.default = nixdeploy.packages.x86_64-linux.default;
+packages.x86_64-linux.default = nixosdeploy.packages.x86_64-linux.default;
 ```
 
 Now you can just do `nix run .` to invoke NixDeploy. The advantage of this is
