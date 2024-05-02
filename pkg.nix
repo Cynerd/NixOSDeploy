@@ -11,7 +11,7 @@
     jq
   ];
 in
-  stdenvNoCC.mkDerivation (final: {
+  stdenvNoCC.mkDerivation {
     pname = "nixdeploy";
     version = "1.0.0-${_srchash}";
     nativeBuildInputs = [makeWrapper];
@@ -27,4 +27,4 @@ in
       license = licenses.gpl3Plus;
       platforms = platforms.linux;
     };
-  })
+  }

@@ -25,8 +25,8 @@ in
         ];
         specialArgs = {
           inputModules =
-            mapAttrs (n: v: v.nixosModules)
-            (filterAttrs (n: v: v ? nixosModules) self.inputs);
+            mapAttrs (_: v: v.nixosModules)
+            (filterAttrs (_: v: v ? nixosModules) self.inputs);
           lib = nixpkgs.lib.extend (composeManyExtensions [
             self.overlays.lib
           ]);

@@ -10,7 +10,7 @@
   in
     {
       nixosModules.default = import ./nixos.nix;
-      overlays.default = final: prev: {
+      overlays.default = final: _: {
         nixdeploy = final.callPackage ./pkg.nix {
           _srchash = self.shortRev or self.dirtyShortRev or "unknown";
         };

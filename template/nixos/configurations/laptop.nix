@@ -1,5 +1,7 @@
 {
+  # deadnix: skip
   pkgs,
+  # deadnix: skip
   lib,
   ...
 }: {

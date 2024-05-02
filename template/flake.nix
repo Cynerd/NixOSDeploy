@@ -19,7 +19,7 @@
   in
     {
       overlays = {
-        lib = final: prev: import ./lib prev;
+        lib = _: prev: import ./lib prev;
         pkgs = import ./pkgs;
         default = composeManyExtensions [
           # You can add here overlays from other inputs.
