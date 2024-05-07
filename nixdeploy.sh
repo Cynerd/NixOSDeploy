@@ -273,6 +273,7 @@ copy() {
 			"$(numfmt --to=iec "$required") / $(numfmt --to=iec "$freespace")"
 		if [ "$required" -ge "$freespace" ]; then
 			error "There is not enough space to copy configuration: $config"
+			unset "configs[\"$config\"]"
 			continue
 		fi
 
