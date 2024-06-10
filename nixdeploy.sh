@@ -51,6 +51,7 @@ help() {
 		  -a ARGS Argument to be appended when invoking 'nix build'
 		  -p PATH Path to the directory with flake (otherwise current directory is used)
 		  -f      Fast execution by not fetching latest deployment configuration
+		  -l      Force local build instead of remote (handy for testing)
 		  -x      Run in debug mode
 		  -h      Print this help text and exit
 	EOF
@@ -208,7 +209,8 @@ build() {
 	local args=()
 	local confs=()
 	for config in "${!configs[@]}"; do
-		config_check "$config" '.remoteBuild' && continue
+		[[ "$local_build" == "y" ]] && config_check "$config" '.remoteBuild' &&
+			continue
 		[[ -e "$(f_drv "$config")" ]] || continue
 		confs+=("$config")
 		args+=("$(f_drv_store "$config")")
@@ -235,7 +237,8 @@ build() {
 # Build configuration on the destination
 remote_build() {
 	for config in "${!configs[@]}"; do
-		config_check "$config" '.remoteBuild' || continue
+		[[ "$local_build" != "y" ]] || config_check "$config" '.remoteBuild' ||
+			continue
 		[[ -e "$(f_drv "$config")" ]] || continue
 
 		stage "Building: $config"
@@ -249,7 +252,8 @@ remote_build() {
 copy() {
 	for config in "${!configs[@]}"; do
 		[[ "$(config_get "$config" '._dups.hostName')" != "$(hostname)" ]] || continue
-		config_check "$config" '.remoteBuild' && continue
+		[[ "$local_build" == "y" ]] && config_check "$config" '.remoteBuild' &&
+			continue
 
 		local res
 		res="$(f_result "$config")"
@@ -285,7 +289,8 @@ activate() {
 	local op="$1"
 	for config in "${!configs[@]}"; do
 		out="$(_outPath "$config")"
-		[[ -e "$out" ]] || config_check "$config" '.remoteBuild' || continue
+		[[ -e "$out" ]] || [[ "$local_build" == "y" ]] ||
+			config_check "$config" '.remoteBuild' || continue
 		stage "${op^} configuration $config"
 		echo -e '\a'
 		_ssht "$config" "$out/bin/nixdeploy" "$op"
@@ -296,11 +301,12 @@ activate() {
 # Parse options
 declare -a nixargs
 fast="n"
+local_build="n"
 do_build="y"
 do_copy="y"
 do_activate="y"
 activate_op="switch"
-while getopts "erctbda:p:fxh" opt; do
+while getopts "erctbda:p:flxh" opt; do
 	case "$opt" in
 	e)
 		do_build="n"
@@ -331,6 +337,9 @@ while getopts "erctbda:p:fxh" opt; do
 		;;
 	f)
 		fast="y"
+		;;
+	l)
+		local_build="y"
 		;;
 	x)
 		set -x
