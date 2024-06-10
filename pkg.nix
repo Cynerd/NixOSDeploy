@@ -6,10 +6,11 @@
   gawk,
   gnused,
   jq,
+  util-linux,
 }: let
   inherit (lib) licenses platforms makeBinPath;
 
-  dependencies = [gawk gnused jq];
+  dependencies = [gawk gnused jq util-linux];
 in
   stdenvNoCC.mkDerivation {
     pname = "nixdeploy";
