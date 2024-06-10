@@ -15,6 +15,9 @@ _print() {
 stage() {
 	_print '1;35' "$@"
 }
+verbose() {
+	[[ "$verbose" != "y" ]] || _print "1;37" "${@@Q}"
+}
 info() {
 	_print "1;32" "$@"
 }
@@ -52,6 +55,7 @@ help() {
 		  -p PATH Path to the directory with flake (otherwise current directory is used)
 		  -f      Fast execution by not fetching latest deployment configuration
 		  -l      Force local build instead of remote (handy for testing)
+		  -v      Run in verbose mode that tells you executed Nix commands
 		  -x      Run in debug mode
 		  -h      Print this help text and exit
 	EOF
@@ -78,19 +82,20 @@ jqcheck() {
 _nix() {
 	local op="$1"
 	shift
-	nix "$op" --no-warn-dirty "$@"
+	verbose nix "$op" "$@"
+	nix "$op" "$@"
 }
 
 nixeval() {
 	local attr="$1"
 	shift
-	_nix eval --json "$src#$attr" "$@"
+	_nix eval --no-warn-dirty --json "$src#$attr" "$@"
 }
 
 nixeval_raw() {
 	local attr="$1"
 	shift
-	_nix eval --raw "$src#$attr" "$@"
+	_nix eval --no-warn-dirty --raw "$src#$attr" "$@"
 }
 
 config_check() {
@@ -106,17 +111,24 @@ config_read() {
 	jqread "$query" "$@" <<<"${configs["$config"]}"
 }
 
+use_remote_build() {
+	[[ "$local_build" != "y" ]] && config_check "$1" '.remoteBuild'
+}
+
 __ssh() (
 	local arg="$1"
 	local config="$2"
 	shift 2
 	config_read "$config" '[.ssh.host,._dups.hostName].[]' ssh_host hostname
 	if [ "$hostname" != "$(hostname)" ]; then
+		verbose ssh $arg "$ssh_host" -- "$@"
 		ssh $arg "$ssh_host" -- "$@"
 	else
 		if [ $# -gt 1 ]; then
+			verbose "$@"
 			"$@"
 		else
+			verbose "$1"
 			sh -c "$1"
 		fi
 	fi
@@ -129,7 +141,7 @@ _copy() {
 	shift
 	local -a args
 	config_check "$config" '.noCopySubstitute' || args+=("--substitute-on-destination")
-	nix copy "${args[@]}" --to "ssh://$(config_get "$config" '.ssh.host')" "$@"
+	_nix copy "${args[@]}" --to "ssh://$(config_get "$config" '.ssh.host')" "$@"
 }
 
 _outPath() {
@@ -209,8 +221,7 @@ build() {
 	local args=()
 	local confs=()
 	for config in "${!configs[@]}"; do
-		[[ "$local_build" == "y" ]] && config_check "$config" '.remoteBuild' &&
-			continue
+		use_remote_build "$config" && continue
 		[[ -e "$(f_drv "$config")" ]] || continue
 		confs+=("$config")
 		args+=("$(f_drv_store "$config")")
@@ -218,7 +229,7 @@ build() {
 	[[ ${#confs[@]} -gt 0 ]] || return 0
 	stage "Building: ${confs[*]}"
 	# Build all configurations at once
-	nix build --keep-going --no-link "${nixargs[@]}" "${args[@]}" || true
+	_nix build --keep-going --no-link "${nixargs[@]}" "${args[@]}" || true
 	# Create links to keep latest builds from being garbage collected
 	for config in "${confs[@]}"; do
 		local res dest
@@ -237,8 +248,7 @@ build() {
 # Build configuration on the destination
 remote_build() {
 	for config in "${!configs[@]}"; do
-		[[ "$local_build" != "y" ]] || config_check "$config" '.remoteBuild' ||
-			continue
+		use_remote_build "$config" || continue
 		[[ -e "$(f_drv "$config")" ]] || continue
 
 		stage "Building: $config"
@@ -252,8 +262,7 @@ remote_build() {
 copy() {
 	for config in "${!configs[@]}"; do
 		[[ "$(config_get "$config" '._dups.hostName')" != "$(hostname)" ]] || continue
-		[[ "$local_build" == "y" ]] && config_check "$config" '.remoteBuild' &&
-			continue
+		use_remote_build "$config" && continue
 
 		local res
 		res="$(f_result "$config")"
@@ -289,8 +298,7 @@ activate() {
 	local op="$1"
 	for config in "${!configs[@]}"; do
 		out="$(_outPath "$config")"
-		[[ -e "$out" ]] || [[ "$local_build" == "y" ]] ||
-			config_check "$config" '.remoteBuild' || continue
+		[[ -e "$out" ]] || use_remote_build "$config" || continue
 		stage "${op^} configuration $config"
 		echo -e '\a'
 		_ssht "$config" "$out/bin/nixdeploy" "$op"
@@ -302,11 +310,12 @@ activate() {
 declare -a nixargs
 fast="n"
 local_build="n"
+verbose="n"
 do_build="y"
 do_copy="y"
 do_activate="y"
 activate_op="switch"
-while getopts "erctbda:p:flxh" opt; do
+while getopts "erctbda:p:flvxh" opt; do
 	case "$opt" in
 	e)
 		do_build="n"
@@ -340,6 +349,9 @@ while getopts "erctbda:p:flxh" opt; do
 		;;
 	l)
 		local_build="y"
+		;;
+	v)
+		verbose="y"
 		;;
 	x)
 		set -x
