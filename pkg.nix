@@ -3,13 +3,13 @@
   lib,
   makeWrapper,
   _srchash,
+  gawk,
+  gnused,
   jq,
 }: let
   inherit (lib) licenses platforms makeBinPath;
 
-  dependencies = [
-    jq
-  ];
+  dependencies = [gawk gnused jq];
 in
   stdenvNoCC.mkDerivation {
     pname = "nixdeploy";

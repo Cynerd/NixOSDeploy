@@ -70,7 +70,8 @@ in {
 
   config = {
     system.extraSystemBuilderCmds = mkIf config.deploy.enable ''
-      sucmd='${config.deploy.sucmd}' substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
+      sucmd='${config.deploy.sucmd}' \
+        substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
       chmod +x $out/bin/nixdeploy
     '';
 
