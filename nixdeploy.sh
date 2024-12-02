@@ -237,6 +237,7 @@ build() {
 		rm -f "$res"
 		dest="$(_outPath "$config")"
 		if [[ -e "$dest" ]]; then
+			# TODO we need to somehow add this to gcroots as well
 			ln -sf "$dest" "$res"
 		else
 			warning "Build failed for $config"
