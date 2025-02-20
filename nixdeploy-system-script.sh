@@ -49,14 +49,14 @@ fi
 
 latest_id=0
 for link in /nix/var/nix/profiles/system-*-link; do
-	link="${link#/nix/var/nix/profiles/system-}"
-	link="${link%-link}"
-	[[ "$link" =~ ^[0-9]+$ ]] || continue
-	[[ "$(readlink -f "$link")" == @out@ ]] && {
+	if [[ "$(readlink -f "$link")" == @out@ ]]; then
 		latest_id=
 		break
-	}
-	[[ $latest_id -gt $link ]] || latest_id=$link
+	fi
+	linkid="${link#/nix/var/nix/profiles/system-}"
+	linkid="${linkid%-link}"
+	[[ "$linkid" =~ ^[0-9]+$ ]] || continue
+	[[ $latest_id -gt $linkid ]] || latest_id=$linkid
 done
 [[ -z "$latest_id" ]] ||
 	ln -sf @out@ "/nix/var/nix/profiles/system-$((latest_id + 1))-link"
