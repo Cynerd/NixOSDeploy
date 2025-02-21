@@ -72,10 +72,9 @@ if [[ "$(readlink -f "$latest_link")" != "@out@" ]]; then
 fi
 
 # Remove older configurations
-# TODO configuration for the number of kept systems
-toclear=$((${#revs[@]} - 120))
-if [[ $toclear -gt 0 ]]; then
-	for id in "${revs[@]0:$toclear}"; do
+if [[ -n "@keep_latest@" ]]; then
+	toclear=$((${#revs[@]} - @keep_latest@))
+	for id in "${revs[@]:0:$toclear}"; do
 		link="/nix/var/nix/profiles/system-$id-link"
 		system="$(readlink -f "$link")"
 		if [[ "$system" != "$current_system" ]] &&
@@ -85,7 +84,6 @@ if [[ $toclear -gt 0 ]]; then
 		fi
 	done
 fi
-
 
 if [[ "$setenv" == "y" ]]; then
 	rm -f /nix/var/nix/profiles/system
