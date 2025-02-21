@@ -72,8 +72,8 @@ if [[ "$(readlink -f "$latest_link")" != "@out@" ]]; then
 fi
 
 # Remove older configurations
-if [[ -n "@keep_latest@" ]]; then
-	toclear=$((${#revs[@]} - @keep_latest@))
+if [[ -n "@configurationLimit@" ]]; then
+	toclear=$((${#revs[@]} - @configurationLimit@))
 	for id in "${revs[@]:0:$toclear}"; do
 		link="/nix/var/nix/profiles/system-$id-link"
 		system="$(readlink -f "$link")"

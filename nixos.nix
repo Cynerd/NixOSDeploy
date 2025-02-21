@@ -60,7 +60,7 @@ in {
       the Internet or even if it just slower than direct copy.
     '';
 
-    keep_latest = mkOption {
+    configurationLimit = mkOption {
       type = with types; nullOr int;
       default = null;
       description = ''
@@ -91,7 +91,7 @@ in {
   config = {
     system.extraSystemBuilderCmds = mkIf config.deploy.enable ''
       sucmd='${config.deploy.sucmd}' \
-      keep_latest='${toString config.deploy.keep_latest}' \
+      configurationLimit='${toString config.deploy.configurationLimit}' \
         substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
       chmod +x $out/bin/nixdeploy
     '';
