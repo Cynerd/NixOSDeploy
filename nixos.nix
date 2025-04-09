@@ -12,7 +12,7 @@ in {
       default = true;
       example = false;
       description = ''
-        Controls inclusion of this configuration when runninig `nixdeploy` without
+        Controls inclusion of this configuration when runninig `nixosdeploy` without
         any specific target.
       '';
     };
@@ -92,8 +92,8 @@ in {
     system.extraSystemBuilderCmds = mkIf config.deploy.enable ''
       sucmd='${config.deploy.sucmd}' \
       configurationLimit='${toString config.deploy.configurationLimit}' \
-        substituteAll ${./nixdeploy-system-script.sh} $out/bin/nixdeploy
-      chmod +x $out/bin/nixdeploy
+        substituteAll ${./nixosdeploy-system-script.sh} $out/bin/nixosdeploy
+      chmod +x $out/bin/nixosdeploy
     '';
 
     deploy._dups = {
