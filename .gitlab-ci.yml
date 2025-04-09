@@ -8,7 +8,6 @@ workflow:
 
 variables:
   GIT_DEPTH: 0
-  CACHIX_NAME: nixturris
 
 .nix:
   image: registry.gitlab.com/cynerd/gitlab-ci-nix

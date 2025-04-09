@@ -162,7 +162,7 @@ config() {
 			old_hash="$(jq -r 'keys | .[0]' /dev/fd/42)"
 			if [[ -z "$old_hash" ]] || [[ "$fast" == "n" ]] && [[ "$old_hash" != "$src_hash" ]]; then
 				stage "Indexing your flake..."
-				rm -f "$src/.nixdeploy"/config-*.json >/dev/null || true
+				rm -f "$src/.nixosdeploy"/config-*.json >/dev/null || true
 				truncate --size 0 /dev/fd/42
 				nixeval "nixosConfigurations" --apply "v: {\"$src_hash\" = builtins.attrNames v;}" >&42
 			fi
@@ -201,12 +201,12 @@ drv() {
 		local drv
 		drv="$(f_drv "$config")"
 		[[ -L "$drv" ]] && [[ -e "$drv" ]] &&
-			[[ "$(nix derivation show "$(f_drv_store "$config")" | jq -r '.[].env.nixdeploySrcHash')" == "$src_hash" ]] &&
+			[[ "$(nix derivation show "$(f_drv_store "$config")" | jq -r '.[].env.nixosdeploySrcHash')" == "$src_hash" ]] &&
 			continue
 
 		stage "Evaluating configuration $config..."
 		local base="nixosConfigurations.\"$config\""
-		local tail=".config.system.build.toplevel.overrideAttrs {nixdeploySrcHash = \"$src_hash\";}"
+		local tail=".config.system.build.toplevel.overrideAttrs {nixosdeploySrcHash = \"$src_hash\";}"
 		local func="c: (c$tail).drvPath"
 		if ! config_check "$config" '.nativeBuild' && [[ "$(nixeval_raw "$base.config.nixpkgs.hostPlatform.system")" != "$build_system" ]]; then
 			func="c: ((c.extendModules {modules = [{nixpkgs.buildPlatform.system = \"$build_system\";}];})$tail).drvPath"
@@ -302,7 +302,7 @@ activate() {
 		[[ -e "$out" ]] || use_remote_build "$config" || continue
 		stage "${op^} configuration $config"
 		echo -e '\a'
-		_ssht "$config" "$out/bin/nixdeploy" "$op"
+		_ssht "$config" "$out/bin/nixosdeploy" "$op"
 	done
 }
 
@@ -376,19 +376,19 @@ fi
 build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
 
 # Configuration
-[[ -f "$src/.nixdeploy-config.sh" ]] && ."$src/.nixdeploy-config.sh"
+[[ -f "$src/.nixosdeploy-config.sh" ]] && ."$src/.nixosdeploy-config.sh"
 
 # Index files
-f_configs="$src/.nixdeploy/nixosConfigurations.json"
-f_config() { echo "$src/.nixdeploy/config-$1.json"; }
-f_drv() { echo "$src/.nixdeploy/config-$1.drv"; }
+f_configs="$src/.nixosdeploy/nixosConfigurations.json"
+f_config() { echo "$src/.nixosdeploy/config-$1.json"; }
+f_drv() { echo "$src/.nixosdeploy/config-$1.drv"; }
 f_drv_store() { echo "$(readlink -f "$(f_drv "$1")")^*"; }
-f_result() { echo "$src/.nixdeploy/result-$1"; }
+f_result() { echo "$src/.nixosdeploy/result-$1"; }
 
 src_hash="$(_nix flake prefetch --json "$src" | jq -r '.hash')"
 
 declare -A configs=()
-mkdir -p "$src/.nixdeploy"
+mkdir -p "$src/.nixosdeploy"
 config "$@"
 
 ((${#configs[@]})) || fail "No configuration to deploy."
