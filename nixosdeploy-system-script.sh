@@ -51,7 +51,10 @@ if [[ -z "${NIXDEPLOY_REEXEC:-}" ]] && [[ "$applied" == "n" ]]; then
 	nix store diff-closures "$current_system" @out@
 fi
 
-[[ "$(id -u)" -eq 0 ]] || exec @sucmd@ NIXDEPLOY_REEXEC="yes" "$0" "$@"
+[[ "$(id -u)" -eq 0 ]] || {
+	export NIXDEPLOY_REEXEC="yes"
+	exec @sucmd@ "$0" "$@"
+}
 
 readarray -t revs < <(
 	find_profile -printf '%P\n' |
