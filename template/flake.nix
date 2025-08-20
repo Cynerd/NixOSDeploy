@@ -8,52 +8,38 @@
 
   outputs = {
     self,
-    flake-utils,
+    systems,
     nixpkgs,
     nixosdeploy,
     ...
   }: let
-    inherit (flake-utils.lib) eachDefaultSystem;
-    inherit (nixpkgs.lib) composeManyExtensions attrValues;
-    revision = self.shortRev or self.dirtyShortRev or "unknown";
-  in
-    {
-      overlays = {
-        lib = _: prev: import ./lib prev;
-        pkgs = import ./pkgs;
-        default = composeManyExtensions [
-          # You can add here overlays from other inputs.
-          self.overlays.pkgs
-        ];
-      };
+    inherit (nixpkgs.lib) genAttrs composeManyExtensions;
+    forSystems = genAttrs (import systems);
+    withPkgs = func: forSystems (system: func self.legacyPackages.${system});
+  in {
+    overlays = {
+      pkgs = import ./pkgs;
+      default = composeManyExtensions [
+        # You can add here package overlays from other inputs.
+        self.overlays.pkgs
+      ];
+      lib = composeManyExtensions [
+        # You can add here library overlays from other inputs.
+        (import ./lib)
+      ];
+    };
 
-      nixosModules = let
-        modules = import ./nixos/modules {inherit (nixpkgs) lib;};
-      in
-        modules
-        // {
-          default = {
-            imports =
-              [
-                nixosdeploy.nixosModules.default
-                # You can add here modules from other inputs.
-              ]
-              ++ (attrValues modules);
-            config = {
-              nixpkgs.overlays = [self.overlays.default];
-              system.configurationRevision = revision;
-            };
-          };
-        };
+    nixosModules = import ./nixos/modules self;
+    nixosConfigurations = import ./nixos/configurations self;
 
-      nixosConfigurations = import ./nixos/configurations self;
-      lib = import ./lib nixpkgs.lib;
-    }
-    // eachDefaultSystem (system: let
-      pkgs = nixpkgs.legacyPackages.${system}.extend self.overlays.default;
-    in {
-      packages.default = nixosdeploy.packages.${system}.default;
-      legacyPackages = pkgs;
-      formatter = pkgs.alejandra;
+    packages = forSystems (system: {
+      inherit (nixosdeploy.packages.${system}) default;
     });
+
+    legacyPackages =
+      forSystems (system:
+        nixpkgs.legacyPackages.${system}.extend self.overlays.default);
+
+    formatter = withPkgs (pkgs: pkgs.alejandra);
+  };
 }

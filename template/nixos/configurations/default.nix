@@ -1,17 +1,8 @@
 self: let
   inherit (builtins) readDir;
-  inherit (self.inputs) nixpkgs;
-  inherit
-    (nixpkgs.lib)
-    filterAttrs
-    hasSuffix
-    mapAttrs'
-    nameValuePair
-    nixosSystem
-    removeSuffix
-    mapAttrs
-    composeManyExtensions
-    ;
+  inherit (self.inputs.nixpkgs) lib;
+  inherit (lib) filterAttrs mapAttrs' mapAttrs nameValuePair;
+  inherit (lib) hasSuffix removeSuffix nixosSystem;
 in
   mapAttrs' (
     fname: _: let
@@ -27,9 +18,7 @@ in
           inputModules =
             mapAttrs (_: v: v.nixosModules)
             (filterAttrs (_: v: v ? nixosModules) self.inputs);
-          lib = nixpkgs.lib.extend (composeManyExtensions [
-            self.overlays.lib
-          ]);
+          lib = lib.extend self.overlays.lib;
         };
       })
   )
