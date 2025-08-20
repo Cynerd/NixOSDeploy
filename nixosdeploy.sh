@@ -89,13 +89,13 @@ _nix() {
 nixeval() {
 	local attr="$1"
 	shift
-	_nix eval --no-warn-dirty --json "$src#$attr" "$@"
+	_nix eval --no-warn-dirty --json "$src_store#$attr" "$@"
 }
 
 nixeval_raw() {
 	local attr="$1"
 	shift
-	_nix eval --no-warn-dirty --raw "$src#$attr" "$@"
+	_nix eval --no-warn-dirty --raw "$src_store#$attr" "$@"
 }
 
 config_check() {
@@ -162,7 +162,7 @@ config() {
 			old_hash="$(jq -r 'keys | .[0]' /dev/fd/42)"
 			if [[ -z "$old_hash" ]] || [[ "$fast" == "n" ]] && [[ "$old_hash" != "$src_hash" ]]; then
 				stage "Indexing your flake..."
-				rm -f "$src/.nixosdeploy"/config-*.json >/dev/null || true
+				rm -f "$deploydir"/config-*.json >/dev/null || true
 				truncate --size 0 /dev/fd/42
 				nixeval "nixosConfigurations" --apply "v: {\"$src_hash\" = builtins.attrNames v;}" >&42
 			fi
@@ -370,25 +370,29 @@ done
 shift $((OPTIND - 1))
 
 if ! [[ -v src ]]; then
-	flake_metadata="$(nix flake metadata --json)"
-	src="$(jq -r '.url' <<<"$flake_metadata" | sed 's#^git+file://##')"
+	src="$(pwd)"
+	while [[ -n "$src" ]] && ! [[ -f "$src/flake.nix" ]]; do
+		src="$(dirname "$src")"
+	done
+	[[ -n "$src" ]] || fail "Unable to locate flake.nix"
 fi
-build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
 
-# Configuration
-[[ -f "$src/.nixosdeploy-config.sh" ]] && ."$src/.nixosdeploy-config.sh"
+build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
+{
+	read -r src_store
+	read -r src_hash
+} < <(_nix flake prefetch --json "${src:-.}" | jq -r '.storePath, .hash')
 
 # Index files
-f_configs="$src/.nixosdeploy/nixosConfigurations.json"
-f_config() { echo "$src/.nixosdeploy/config-$1.json"; }
-f_drv() { echo "$src/.nixosdeploy/config-$1.drv"; }
+deploydir="$src/.nixosdeploy"
+f_configs="$deploydir/nixosConfigurations.json"
+f_config() { echo "$deploydir/config-$1.json"; }
+f_drv() { echo "$deploydir/config-$1.drv"; }
 f_drv_store() { echo "$(readlink -f "$(f_drv "$1")")^*"; }
-f_result() { echo "$src/.nixosdeploy/result-$1"; }
-
-src_hash="$(_nix flake prefetch --json "$src" | jq -r '.hash')"
+f_result() { echo "$deploydir/result-$1"; }
 
 declare -A configs=()
-mkdir -p "$src/.nixosdeploy"
+mkdir -p "$deploydir"
 config "$@"
 
 ((${#configs[@]})) || fail "No configuration to deploy."
