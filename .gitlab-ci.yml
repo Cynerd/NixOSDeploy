@@ -31,6 +31,27 @@ nix-check:
   script:
     - nix flake check
 
+.template:
+  extends: .nix
+  script:
+    - mkdir /tmp/test && cd /tmp/test
+    - nix flake init --template "$CI_PROJECT_DIR"
+    - nix run "$CI_PROJECT_DIR#gnused" -- -i "s|url = .*|url = \"$CI_PROJECT_DIR\";|" flake.nix
+
+template-run:
+  stage: test
+  extends: .template
+  script:
+    - !reference [.template, script]
+    - nix run . -- -r
+
+template-nix-check:
+  stage: test
+  extends: .template
+  script:
+    - !reference [.template, script]
+    - nix flake check -L
+
 statix:
   stage: test
   extends: .nix
