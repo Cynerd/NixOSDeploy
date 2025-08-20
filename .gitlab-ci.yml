@@ -54,5 +54,4 @@ nixfmt:
   extends: .nix
   allow_failure: true
   script:
-    - nix fmt
-    - git diff --exit-code
+    - nix fmt -- --check .
