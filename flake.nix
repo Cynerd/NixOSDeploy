@@ -4,21 +4,20 @@
   outputs = {
     self,
     nixpkgs,
+    systems,
   }: let
-    inherit (nixpkgs.lib) id genAttrs systems;
-    withPkgs = func:
-      genAttrs systems.flakeExposed (system:
-        func (import nixpkgs {
-          inherit system;
-          overlays = [self.overlays.default];
-        }));
+    inherit (nixpkgs.lib) genAttrs;
+    forSystems = genAttrs (import systems);
+    withPkgs = func: forSystems (system: func self.legacyPackages.${system});
 
     _srchash = self.shortRev or self.dirtyShortRev or "unknown";
   in {
     nixosModules.default = import ./nixos.nix;
+
     overlays.default = final: _: {
       nixosdeploy = final.callPackage ./pkg.nix {inherit _srchash;};
     };
+
     templates.default = {
       path = ./template;
       description = "NixOS configurations deployed with NixDeploy";
@@ -27,7 +26,11 @@
     packages = withPkgs (pkgs: {
       default = pkgs.nixosdeploy;
     });
-    legacyPackages = withPkgs id;
+
+    legacyPackages =
+      forSystems (system:
+        nixpkgs.legacyPackages.${system}.extend self.overlays.default);
+
     formatter = withPkgs (pkgs: pkgs.alejandra);
   };
 }
