@@ -47,3 +47,8 @@ Now you can read the help of the `nixosdeploy` with `nix run . -- -h`.
 
 All available configuration can be seen in [NixOS module file](./nixos.nix) in
 this repository.
+
+> NixOSDeploy has support for
+> [nix-output-monitor](https://github.com/maralorn/nix-output-monitor) for local
+> builds. It will be automatically used if `nom` command is available in the
+> shell environment.

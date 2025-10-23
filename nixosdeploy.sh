@@ -82,8 +82,13 @@ jqcheck() {
 _nix() {
 	local op="$1"
 	shift
-	verbose nix "$op" "$@"
-	nix "$op" "$@"
+	local nixcmd="nix"
+	if [[ "$op" == "build" ]] && command -v nom >/dev/null 2>&1; then
+		nixcmd="nom"
+	fi
+
+	verbose "$nixcmd" "$op" "$@"
+	"$nixcmd" "$op" "$@"
 }
 
 nixeval() {
