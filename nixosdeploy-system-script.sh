@@ -77,15 +77,17 @@ fi
 # Remove older configurations
 if [[ -n "@configurationLimit@" ]]; then
 	toclear=$((${#revs[@]} - @configurationLimit@))
-	for id in "${revs[@]:0:$toclear}"; do
-		link="/nix/var/nix/profiles/system-$id-link"
-		system="$(readlink -f "$link")"
-		if [[ "$system" != "$current_system" ]] &&
-			[[ "$system" != "$booted_system" ]] &&
-			[[ "$system" != '@out@' ]]; then
-			rm -f "$link"
-		fi
-	done
+	if [[ "$toclear" -gt 0 ]]; then
+		for id in "${revs[@]:0:$toclear}"; do
+			link="/nix/var/nix/profiles/system-$id-link"
+			system="$(readlink -f "$link")"
+			if [[ "$system" != "$current_system" ]] &&
+				[[ "$system" != "$booted_system" ]] &&
+				[[ "$system" != '@out@' ]]; then
+				rm -f "$link"
+			fi
+		done
+	fi
 fi
 
 if [[ "$setenv" == "y" ]]; then
