@@ -89,7 +89,7 @@ in {
   };
 
   config = {
-    system.extraSystemBuilderCmds = mkIf config.deploy.enable ''
+    system.systemBuilderCommands = mkIf config.deploy.enable ''
       sucmd='${config.deploy.sucmd}' \
       configurationLimit='${toString config.deploy.configurationLimit}' \
         substituteAll ${./nixosdeploy-system-script.sh} $out/bin/nixosdeploy
