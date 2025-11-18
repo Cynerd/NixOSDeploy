@@ -92,8 +92,8 @@ in {
     system.systemBuilderCommands = mkIf config.deploy.enable ''
       sucmd='${config.deploy.sucmd}' \
       configurationLimit='${toString config.deploy.configurationLimit}' \
-        substituteAll ${./nixosdeploy-system-script.sh} $out/bin/nixosdeploy
-      chmod +x $out/bin/nixosdeploy
+        substituteAll ${./nixosdeploy-system-script.sh} $out/nixosdeploy
+      chmod +x $out/nixosdeploy
     '';
 
     deploy._dups = {

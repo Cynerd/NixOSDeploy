@@ -307,7 +307,7 @@ activate() {
 		[[ -e "$out" ]] || use_remote_build "$config" || continue
 		stage "${op^} configuration $config"
 		echo -e '\a'
-		_ssht "$config" "$out/bin/nixosdeploy" "$op"
+		_ssht "$config" "$out/nixosdeploy" "$op"
 	done
 }
 
