@@ -151,8 +151,20 @@ _copy() {
 
 _outPath() {
 	local config="$1"
-	nix derivation show "$(readlink -f "$(f_drv "$config")")^*" |
-		jq -r '.[].outputs.out.path'
+	local filter='.derivations.[].outputs.out.path'
+	if [[ "$nix_major_version" -le 2 ]] && [[ "$nix_minor_version" -lt 34 ]]; then
+		filter='.[].outputs.out.path'
+	fi
+	nix derivation show "$(f_drv_store "$config")" | jq -r "$filter"
+}
+
+_nixosdeploySrcHash() {
+	local config="$1"
+	local filter='.derivations.[].env.nixosdeploySrcHash'
+	if [[ "$nix_major_version" -le 2 ]] && [[ "$nix_minor_version" -lt 34 ]]; then
+		filter='.[].env.nixosdeploySrcHash'
+	fi
+	nix derivation show "$(f_drv_store "$config")" | jq -r "$filter"
 }
 
 ################################################################################
@@ -206,7 +218,7 @@ drv() {
 		local drv
 		drv="$(f_drv "$config")"
 		[[ -L "$drv" ]] && [[ -e "$drv" ]] &&
-			[[ "$(nix derivation show "$(f_drv_store "$config")" | jq -r '.[].env.nixosdeploySrcHash')" == "$src_hash" ]] &&
+			[[ "$(_nixosdeploySrcHash "$config")" == "$src_hash" ]] &&
 			continue
 
 		stage "Evaluating configuration $config..."
@@ -381,6 +393,9 @@ if ! [[ -v src ]]; then
 	done
 	[[ -n "$src" ]] || fail "Unable to locate flake.nix"
 fi
+
+nix_version="$(nix --version | cut -d' ' -f3)"
+IFS='.' read nix_major_version nix_minor_version nix_fixup_version <<<"$nix_version"
 
 build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
 {
