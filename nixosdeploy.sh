@@ -154,6 +154,8 @@ _outPath() {
 	local filter='.derivations.[].outputs.out.path'
 	if [[ "$nix_major_version" -le 2 ]] && [[ "$nix_minor_version" -lt 34 ]]; then
 		filter='.[].outputs.out.path'
+	else
+		echo -n "${NIX_STORE:-/nix/store/}"
 	fi
 	nix derivation show "$(f_drv_store "$config")" | jq -r "$filter"
 }
