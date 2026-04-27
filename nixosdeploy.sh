@@ -316,13 +316,19 @@ copy() {
 
 activate() {
 	local op="$1"
+	local ec=0
 	for config in "${!configs[@]}"; do
 		out="$(_outPath "$config")"
 		[[ -e "$out" ]] || use_remote_build "$config" || continue
 		stage "${op^} configuration $config"
 		echo -e '\a'
-		_ssht "$config" "$out/nixosdeploy" "$op"
+		_ssht "$config" "$out/nixosdeploy" "$op" || {
+			ec=$?
+			warning "Deployment failed with exit code: $ec"
+			read -r -p "Press ENTER to continue or CTRL+C to halt..."
+		}
 	done
+	return $ec
 }
 
 ################################################################################
@@ -397,7 +403,7 @@ if ! [[ -v src ]]; then
 fi
 
 nix_version="$(nix --version | cut -d' ' -f3)"
-IFS='.' read nix_major_version nix_minor_version nix_fixup_version <<<"$nix_version"
+IFS='.' read -r nix_major_version nix_minor_version nix_fixup_version <<<"$nix_version"
 
 build_system="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
 {
