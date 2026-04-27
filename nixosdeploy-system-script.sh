@@ -22,8 +22,13 @@ find_profile() {
 	find /nix/var/nix/profiles -maxdepth 1 -type l -name 'system-[0-9]*-link' "$@"
 }
 
+reexec="n"
 setenv="y"
 op="${1:-switch}"
+if [[ "$op" == *-reexec ]]; then
+	reexec="y"
+	op="${op%-reexec}"
+fi
 case "$op" in
 switch | boot) ;;
 test | dry)
@@ -47,13 +52,12 @@ if [[ "$applied$setenv" == "yn" ]]; then
 	info "This is the current NixOS configuration, no need to deploy."
 	exit 0
 fi
-if [[ -z "${NIXDEPLOY_REEXEC:-}" ]] && [[ "$applied" == "n" ]]; then
+if [[ "$reexec" == "n" ]] && [[ "$applied" == "n" ]]; then
 	nix store diff-closures "$current_system" @out@
 fi
 
 [[ "$(id -u)" -eq 0 ]] || {
-	export NIXDEPLOY_REEXEC="yes"
-	exec @sucmd@ "$0" "$@"
+	exec @sucmd@ "$0" "$op-reexec" "$@"
 }
 
 readarray -t revs < <(
